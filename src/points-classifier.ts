@@ -12,7 +12,7 @@ type Point = [number, number]
 const get_type = ([x, y]: Point) =>
   x >= y ? Type.Up : Type.Down
 
-const make_model = (weights: number[], learning_rate: number = 3) => ({
+const make_model = (weights: number[], learning_rate: number = 0.0001) => ({
   guess(inputs: number[]): number {
     return Math.sign(dot(weights, inputs))
   },
@@ -26,6 +26,7 @@ const make_model = (weights: number[], learning_rate: number = 3) => ({
 let model = make_model([0, 0])
 
 export default (p: P5) => {
+  p.frameRate(1)
   p.textSize(35)
   p.textAlign('center')
   const data: Point[] = Array(80).fill(0).map(() => [
@@ -41,7 +42,7 @@ export default (p: P5) => {
       const guess = model.guess(point)
       model = model.learn(point, guess, actual)
       p.fill(actual === guess ? 'green' : 'red')
-      p.text(actual === Type.Up ? '⬆' : '⬇', x, y)
+      p.text(guess === Type.Up ? '⬆' : '⬇', x, y)
       p.stroke('#000')
     })
   }
