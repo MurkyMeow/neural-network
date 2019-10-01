@@ -1,0 +1,23 @@
+{
+  "name": "neural-networks",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "watch": "rollup -c -w"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "p5": "^0.9.0"
+  },
+  "devDependencies": {
+    "@types/p5": "^0.9.0",
+    "rollup": "^1.22.0",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-typescript2": "^0.24.3",
+    "typescript": "^3.6.3"
+  }
+}
