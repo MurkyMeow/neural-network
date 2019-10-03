@@ -1,4 +1,3 @@
-import P5 from 'p5'
 import { dot } from './helper'
 
 const enum Type {
@@ -25,25 +24,37 @@ const make_model = (weights: number[], learning_rate: number = 0.0001) => ({
 
 let model = make_model([0, 0])
 
-export default (p: P5) => {
-  p.frameRate(1)
-  p.textSize(35)
-  p.textAlign('center')
-  const data: Point[] = Array(80).fill(0).map(() => [
-    Math.random() * p.width,
-    Math.random() * p.height,
-  ])
-  p.draw = function() {
-    p.background('#323232')
-    p.line(0, 0, p.width, p.height).strokeWeight(2)
-    data.forEach(point => {
-      const [x, y] = point
-      const actual = get_type(point)
-      const guess = model.guess(point)
-      model = model.learn(point, guess, actual)
-      p.fill(actual === guess ? 'green' : 'red')
-      p.text(guess === Type.Up ? '⬆' : '⬇', x, y)
-      p.stroke('#000')
-    })
+const data: Point[] = Array(80).fill(0).map(() => [
+  Math.random(),
+  Math.random(),
+])
+
+const [w, h] = [640, 480]
+const ctx = document.createElement('canvas').getContext('2d')!
+ctx.canvas.width = w
+ctx.canvas.height = h
+ctx.font = '3rem Veranda'
+document.body.append(ctx.canvas)
+
+const dt = 1000;
+(function run(time = performance.now()) {
+  if (performance.now() - time < dt) {
+    requestAnimationFrame(() => run(time))
+    return
   }
-}
+  ctx.clearRect(0, 0, w, h)
+  ctx.beginPath()
+  ctx.moveTo(0, 0)
+  ctx.lineTo(w, h)
+  ctx.stroke()
+  data.forEach(point => {
+    const actual = get_type(point)
+    const guess = model.guess(point)
+    model = model.learn(point, guess, actual)
+    const [x, y] = point
+    const text = guess === Type.Up ? '⬆' : '⬇'
+    ctx.fillStyle = actual === guess ? 'green' : 'red'
+    ctx.fillText(text, x * w, y * h)
+  })
+  requestAnimationFrame(run)
+}())
