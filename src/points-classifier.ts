@@ -1,4 +1,4 @@
-import { dot } from './helper'
+import { dot, NTuple } from './helper'
 
 const enum Type {
   Up = 1,
@@ -11,18 +11,31 @@ type Point = [number, number]
 const get_type = ([x, y]: Point) =>
   x >= y ? Type.Up : Type.Down
 
-const make_model = (weights: number[], learning_rate: number = 0.0001) => ({
-  guess(inputs: number[]): number {
-    return Math.sign(dot(weights, inputs))
-  },
-  learn(inputs: number[], guess: number, actual: number) {
-    const error = actual - guess
-    const new_w = inputs.map((input, i) => weights[i] + error * input * learning_rate)
-    return make_model(new_w, learning_rate)
-  },
-});
+interface Model<T extends number> {
+  weights: NTuple<T>
+  learningRate: number
+}
 
-let model = make_model([0, 0])
+function guess<T extends number>(model: Model<T>, inputs: NTuple<T>): number {
+  return Math.sign(dot(model.weights, inputs))
+}
+
+function learn<T extends number>(
+  model: Model<T>,
+  inputs: NTuple<T>,
+  guess: number,
+  actual: number,
+): Model<T> {
+  const error = actual - guess
+  const weights = inputs.map((input, i) =>
+    model.weights[i] + error * input * model.learningRate) as NTuple<T>
+  return { ...model, weights }
+}
+
+let model: Model<2> = {
+  weights: [0, 0],
+  learningRate: 0.1,
+}
 
 const data: Point[] = Array(80).fill(0).map(() => [
   Math.random(),
@@ -49,11 +62,11 @@ const dt = 1000;
   ctx.stroke()
   data.forEach(point => {
     const actual = get_type(point)
-    const guess = model.guess(point)
-    model = model.learn(point, guess, actual)
+    const prediction = guess(model, point)
+    model = learn(model, point, prediction, actual)
     const [x, y] = point
-    const text = guess === Type.Up ? '⬆' : '⬇'
-    ctx.fillStyle = actual === guess ? 'green' : 'red'
+    const text = prediction === Type.Up ? '⬆' : '⬇'
+    ctx.fillStyle = actual === prediction ? 'green' : 'red'
     ctx.fillText(text, x * w, y * h)
   })
   requestAnimationFrame(run)
