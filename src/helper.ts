@@ -1,8 +1,14 @@
-function err(msg: string): never {
-  throw new Error(msg)
+export interface FixedArray<T extends any, L extends number> extends Array<T> {
+  0: T
+  length: L
 }
 
-export const dot = (a: number[], b: number[]) =>
-  a.length === b.length
-    ? a.reduce((acc, el, i) => acc + el * b[i], 0)
-    : err('vectors must have equal lengths')
+export type NTuple<L extends number> =
+  FixedArray<number, L>
+
+export const dot = <A extends number, B extends A>(
+  a: FixedArray<number, A>,
+  b: FixedArray<number, B>,
+): number => {
+  return a.reduce((acc, el, i) => acc + el * b[i])
+}
