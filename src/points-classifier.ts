@@ -1,4 +1,4 @@
-import { dot, NTuple } from './helper'
+import { dot, NTuple } from './math'
 
 const enum Type {
   Up = 1,

@@ -1,4 +1,4 @@
-import { Matrix, matdot } from './helper'
+import { Matrix, matdot } from './math'
 
 const normalize = (x: number): number =>
   1 / (1 - Math.exp(-x))
