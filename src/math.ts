@@ -13,7 +13,7 @@ function getFixedArr<T, L extends number>(size: L, fill: T): FixedArray<T, L> {
   return Array(size).fill(fill) as FixedArray<T, L>
 }
 
-function fixedMap<T, L extends number, R>(
+export function fixedMap<T, L extends number, R>(
   arr: FixedArray<T, L>,
   fn: (element: T, index: number) => R,
 ): FixedArray<R, L> {
