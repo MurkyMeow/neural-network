@@ -1,11 +1,5 @@
 import { Matrix, NTuple, fixedMap, dot } from './math'
 
-const normalize = (x: number): number =>
-  1 / (1 - Math.exp(-x))
-
-const get_change_rate = (x: number): number =>
-  normalize(x) * (1 - normalize(x))
-
 interface Model<
   InputSize extends number,
   OutputSize extends number,
@@ -24,7 +18,7 @@ function guess<I extends number, O extends number, L extends number>(
   return fixedMap(model.outputs, row => dot(row, hidden))
 }
 
-function learn<I extends number, O extends number, L extends number>(
+function train<I extends number, O extends number, L extends number>(
   model: Model<I, O, L>,
   input: NTuple<I>,
   expectation: NTuple<O>,
@@ -32,13 +26,21 @@ function learn<I extends number, O extends number, L extends number>(
   const hidden = fixedMap(model.layers, row => dot(input, row))
   const prediction = fixedMap(model.outputs, row => dot(row, hidden))
 
-  const outErrors = fixedMap(prediction, (x, i) =>
-    0.5 * (x - expectation[i]) ** 2)
+  const outErrors = fixedMap(prediction, (x, i) => x - expectation[i])
 
-  const newOutputs = fixedMap(model.outputs, (output, i) =>
-    fixedMap(output, x => normalize(x + outErrors[i])))
+  const newOutputs = fixedMap(model.outputs, (output, i) => {
+    return fixedMap(output, x => x - Math.sign(outErrors[i]) * model.learningRate)
+  })
 
-  return { ...model, outputs: newOutputs }
+  const totalErrors = outErrors.reduce((acc, el) => acc + el)
+
+  const hiddenErrors = fixedMap(hidden, el => el * totalErrors)
+
+  const newLayers = fixedMap(model.layers, (layer, i) => {
+    return fixedMap(layer, el => el - Math.sign(hiddenErrors[i]) * model.learningRate)
+  })
+
+  return { ...model, layers: newLayers, outputs: newOutputs }
 }
 
 // ---- PREDICTING XOR ----
@@ -59,11 +61,11 @@ const data: Chunk[] = [{
   expected: [1],
 }, {
   input: [0, 0],
-  expected: [1],
+  expected: [0],
 }]
 
 let model: Model<2, 1, 3> = {
-  learningRate: 0.01,
+  learningRate: 0.001,
   layers: [
     [1, 1],
     [1, 1],
@@ -75,9 +77,9 @@ let model: Model<2, 1, 3> = {
 }
 
 // Train
-for (let i = 0; i < 1000; i++) {
+for (let i = 0; i < 50000; i++) {
   const chunk = data[Math.random() * data.length | 0]
-  model = learn(model, chunk.input, chunk.expected)
+  model = train(model, chunk.input, chunk.expected)
 }
 
 // // Test
