@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "watch": "rollup -c -w"
+    "watch": "rollup -c -w",
+    "watch-node": "ts-node-dev --no-notify --respawn src/index.ts"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +15,7 @@
     "rollup": "^1.22.0",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-typescript2": "^0.24.3",
+    "ts-node-dev": "^1.0.0-pre.44",
     "typescript": "^3.6.3"
   }
 }
