@@ -1,5 +1,5 @@
 import { NTuple } from './math'
-import { Model } from './multilayer-model'
+import { Model } from './model'
 
 interface Chunk {
   input: NTuple<2>
