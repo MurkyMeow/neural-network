@@ -9,8 +9,8 @@ export type NTuple<L extends number> =
 export type Matrix<R extends number, C extends number> =
   FixedArray<NTuple<C>, R>
 
-function getFixedArr<T, L extends number>(size: L, fill: T): FixedArray<T, L> {
-  return Array(size).fill(fill) as FixedArray<T, L>
+function fixedArray<L extends number>(size: L): FixedArray<undefined, L> {
+  return Array(size).fill(undefined) as FixedArray<undefined, L>
 }
 
 export function fixedMap<T, L extends number, R>(
@@ -20,11 +20,28 @@ export function fixedMap<T, L extends number, R>(
   return arr.map(fn) as FixedArray<R, L>
 }
 
+export function fixedMapPair<T, K, L extends number, R>(
+  a: FixedArray<T, L>,
+  b: FixedArray<K, L>,
+  fn: (ax: T, bx: K, index: number) => R,
+): FixedArray<R, L> {
+  return fixedMap(a, (ax, i) => fn(ax, b[i], i))
+}
+
+export function fixedReducePair<T, K, L extends number, R>(
+  a: FixedArray<T, L>,
+  b: FixedArray<K, L>,
+  initial: R,
+  fn: (acc: R, ax: T, bx: K, index: number) => R,
+): R {
+  return a.reduce((acc, ax, i) => fn(acc, ax, b[i], i), initial)
+}
+
 export function dot<A extends number, B extends A>(
   a: FixedArray<number, A>,
   b: FixedArray<number, B>,
 ): number {
-  return a.reduce((acc, el, i) => acc + el * b[i])
+  return fixedReducePair(a, b, 0, (acc, ax, bx) => acc + ax * bx)
 }
 
 // this uses fixed arrays to disallow multiplying matrices
@@ -35,8 +52,8 @@ export function matdot<R1 extends number, C1 extends number, R2 extends C1, C2 e
   b: Matrix<R2, C2>,
 ): Matrix<R1, C2> {
   return fixedMap(a, aRow => {
-    return fixedMap(getFixedArr(b[0].length, 0), (_, i) => {
-      const bCol = fixedMap(getFixedArr(b.length, 0), (_, j) => b[i][j])
+    return fixedMap(fixedArray(b[0].length), (_, i) => {
+      const bCol = fixedMap(fixedArray(b.length), (_, j) => b[i][j])
       return dot(aRow, bCol)
     })
   })
