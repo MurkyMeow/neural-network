@@ -61,7 +61,7 @@ export class Model<I extends number, O extends number, L extends number> {
     })
   
     const newLayerBias = fixedMapPair(this.layerBias, hidden,
-      (bias, h, i) => bias - hiddenErrors[i] * this._dnonlin(h))
+      (bias, h, i) => bias - hiddenErrors[i] * this._dnonlin(h) * this.learningRate)
 
     this.outputs = newOutputs
     this.outputBias = newOutBias
