@@ -13,15 +13,15 @@ interface Model<
   outputBias: NTuple<OutputSize>
 }
 
-const sigmoid = (x: number): number => 1 / (1 + Math.exp(-x))
-const dsigmoid = (y: number): number => y * (1 - y)
+const nonlin = (x: number): number => Math.tanh(x)
+const dnonlin = (y: number): number => 1 - y ** 2
 
 function guess<I extends number, O extends number, L extends number>(
   model: Model<I, O, L>,
   input: NTuple<I>,
 ): { hidden: NTuple<L>, output: NTuple<O> } {
-  const hidden = fixedMapPair(model.layers, model.layerBias, (h, b) => sigmoid(dot(h, input) + b))
-  const output = fixedMapPair(model.outputs, model.outputBias, (o, b) => sigmoid(dot(o, hidden) + b))
+  const hidden = fixedMapPair(model.layers, model.layerBias, (h, b) => nonlin(dot(h, input) + b))
+  const output = fixedMapPair(model.outputs, model.outputBias, (o, b) => nonlin(dot(o, hidden) + b))
   return { hidden, output }
 }
 
@@ -33,7 +33,7 @@ function train<I extends number, O extends number, L extends number>(
   const { output, hidden } = guess(model, input)
 
   const outputErrors = fixedMapPair(output, expectation, (y, yHat) =>
-    (y - yHat) * dsigmoid(y))
+    (y - yHat) * dnonlin(y))
 
   const newOutputBias = fixedMapPair(model.outputBias, outputErrors,
     (bias, error) => bias - error * model.learningRate)
@@ -54,7 +54,7 @@ function train<I extends number, O extends number, L extends number>(
   })
 
   const newLayersBias = fixedMapPair(model.layerBias, hidden,
-    (bias, h, i) => bias - hiddenErrors[i] * dsigmoid(h))
+    (bias, h, i) => bias - hiddenErrors[i] * dnonlin(h))
 
   return { ...model, layers: newLayers, outputs: newOutputs, outputBias: newOutputBias, layerBias: newLayersBias }
 }
@@ -95,7 +95,7 @@ let model: Model<2, 1, 3> = {
 }
 
 // Train
-for (let i = 0; i < 500000; i++) {
+for (let i = 0; i < 50000; i++) {
   const chunk = data[Math.random() * data.length | 0]
   model = train(model, chunk.input, chunk.expected)
 }
