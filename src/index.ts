@@ -1,2 +1,2 @@
 // import './points-classifier'
-import './multilayer-model'
+import './xor-problem'

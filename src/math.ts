@@ -9,7 +9,7 @@ export type NTuple<L extends number> =
 export type Matrix<R extends number, C extends number> =
   FixedArray<NTuple<C>, R>
 
-function fixedArray<L extends number>(size: L): FixedArray<undefined, L> {
+export function fixedArray<L extends number>(size: L): FixedArray<undefined, L> {
   return Array(size).fill(undefined) as FixedArray<undefined, L>
 }
 
