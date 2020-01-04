@@ -1,4 +1,4 @@
-import { Matrix, NTuple, fixedMap, dot } from './math'
+import { Matrix, NTuple, fixedMap, dot, fixedMapPair } from './math'
 
 interface Model<
   InputSize extends number,
@@ -8,14 +8,21 @@ interface Model<
   layers: Matrix<LayersCount, InputSize>
   outputs: Matrix<OutputSize, LayersCount>
   learningRate: number
+
+  layerBias: NTuple<LayersCount>
+  outputBias: NTuple<OutputSize>
 }
+
+const sigmoid = (x: number): number => 1 / (1 + Math.exp(-x))
+const dsigmoid = (y: number): number => y * (1 - y)
 
 function guess<I extends number, O extends number, L extends number>(
   model: Model<I, O, L>,
   input: NTuple<I>,
-): NTuple<O> {
-  const hidden = fixedMap(model.layers, row => dot(row, input))
-  return fixedMap(model.outputs, row => dot(row, hidden))
+): { hidden: NTuple<L>, output: NTuple<O> } {
+  const hidden = fixedMapPair(model.layers, model.layerBias, (h, b) => sigmoid(dot(h, input) + b))
+  const output = fixedMapPair(model.outputs, model.outputBias, (o, b) => sigmoid(dot(o, hidden) + b))
+  return { hidden, output }
 }
 
 function train<I extends number, O extends number, L extends number>(
@@ -23,24 +30,33 @@ function train<I extends number, O extends number, L extends number>(
   input: NTuple<I>,
   expectation: NTuple<O>,
 ): Model<I, O, L> {
-  const hidden = fixedMap(model.layers, row => dot(input, row))
-  const prediction = fixedMap(model.outputs, row => dot(row, hidden))
+  const { output, hidden } = guess(model, input)
 
-  const outErrors = fixedMap(prediction, (x, i) => x - expectation[i])
+  const outputErrors = fixedMapPair(output, expectation, (y, yHat) =>
+    (y - yHat) * dsigmoid(y))
 
-  const newOutputs = fixedMap(model.outputs, (output, i) => {
-    return fixedMap(output, x => x - Math.sign(outErrors[i]) * model.learningRate)
+  const newOutputBias = fixedMapPair(model.outputBias, outputErrors,
+    (bias, error) => bias - error * model.learningRate)
+
+  const newOutputs = fixedMapPair(model.outputs, outputErrors,
+    (output, error, i) => fixedMap(output, w => w - error * hidden[i] * model.learningRate))
+
+  const hiddenErrors = fixedMap(hidden, (_, i) => {
+    const weights = fixedMap(newOutputs, newOutput => newOutput[i])
+
+    const errors = fixedMapPair(weights, outputErrors, (w, err) => w * err)
+
+    return errors.reduce((acc, err) => acc + err)
   })
 
-  const totalErrors = outErrors.reduce((acc, el) => acc + el)
-
-  const hiddenErrors = fixedMap(hidden, el => el * totalErrors)
-
-  const newLayers = fixedMap(model.layers, (layer, i) => {
-    return fixedMap(layer, el => el - Math.sign(hiddenErrors[i]) * model.learningRate)
+  const newLayers = fixedMapPair(model.layers, hiddenErrors, (layer, err) => {
+    return fixedMapPair(layer, input, (w, x) => w - x * err * model.learningRate)
   })
 
-  return { ...model, layers: newLayers, outputs: newOutputs }
+  const newLayersBias = fixedMapPair(model.layerBias, hidden,
+    (bias, h, i) => bias - hiddenErrors[i] * dsigmoid(h))
+
+  return { ...model, layers: newLayers, outputs: newOutputs, outputBias: newOutputBias, layerBias: newLayersBias }
 }
 
 // ---- PREDICTING XOR ----
@@ -65,24 +81,30 @@ const data: Chunk[] = [{
 }]
 
 let model: Model<2, 1, 3> = {
-  learningRate: 0.001,
+  learningRate: 0.1,
+  layerBias: [Math.random(), Math.random(), Math.random()],
   layers: [
-    [1, 1],
-    [1, 1],
-    [1, 1],
+    [Math.random(), Math.random()],
+    [Math.random(), Math.random()],
+    [Math.random(), Math.random()],
   ],
+  outputBias: [Math.random()],
   outputs: [
-    [1, 1, 1],
+    [Math.random(), Math.random(), Math.random()],
   ],
 }
 
 // Train
-for (let i = 0; i < 50000; i++) {
+for (let i = 0; i < 500000; i++) {
   const chunk = data[Math.random() * data.length | 0]
   model = train(model, chunk.input, chunk.expected)
 }
 
-// // Test
-for (const chunk of data) {
-  console.log(chunk.input, guess(model, chunk.input))
-}
+// Test
+console.table(
+  data.map(chunk => ({
+    input: chunk.input,
+    expected: chunk.expected,
+    prediction: guess(model, chunk.input).output,
+  }))
+)
