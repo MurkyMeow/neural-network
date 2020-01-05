@@ -42,7 +42,7 @@ export class Model<I extends number, O extends number, L extends number> {
       (y, yHat) => this._dnonlin(y) * (y - yHat))
 
     const newOutputs = fixedMapPair(this.outputs, outputErrors,
-      (output, error, i) => fixedMap(output, w => w - error * hidden[i] * this.learningRate))
+      (output, error) => fixedMapPair(output, hidden, (o, h) => o - error * h * this.learningRate))
 
     const newOutBias = fixedMapPair(this.outputBias, outputErrors,
       (bias, error) => bias - error * this.learningRate)
