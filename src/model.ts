@@ -3,20 +3,16 @@ import { Matrix, NTuple, fixedMap, dot, fixedMapPair, fixedArray } from './math'
 export class Model<I extends number, O extends number, L extends number> {
   layers: Matrix<L, I>
   outputs: Matrix<O, L>
-  learningRate: number
   layerBias: NTuple<L>
   outputBias: NTuple<O>
+  learningRate: number
 
   constructor(args: { inputSize: I, outputSize: O, layersCount: L, learningRate: number }) {
-    this.layers = fixedMap(fixedArray(args.layersCount), () => {
-      return fixedMap(fixedArray(args.inputSize), Math.random)
-    })
-    this.outputs = fixedMap(fixedArray(args.outputSize), () => {
-      return fixedMap(fixedArray(args.layersCount), Math.random)
-    })
+    this.layers = fixedArray(args.layersCount, () => fixedArray(args.inputSize, Math.random))
+    this.outputs = fixedArray(args.outputSize, () => fixedArray(args.layersCount, Math.random))
 
-    this.layerBias = fixedMap(fixedArray(args.layersCount), Math.random)
-    this.outputBias = fixedMap(fixedArray(args.outputSize), Math.random)
+    this.layerBias = fixedArray(args.layersCount, Math.random)
+    this.outputBias = fixedArray(args.outputSize, Math.random)
 
     this.learningRate = args.learningRate
   }

@@ -9,8 +9,12 @@ export type NTuple<L extends number> =
 export type Matrix<R extends number, C extends number> =
   FixedArray<NTuple<C>, R>
 
-export function fixedArray<L extends number>(size: L): FixedArray<undefined, L> {
-  return Array(size).fill(undefined) as FixedArray<undefined, L>
+export function fixedArray<L extends number>(size: L): FixedArray<null, L>
+export function fixedArray<L extends number, R>(size: L, map: (i: number) => R): FixedArray<R, L>
+
+export function fixedArray<L extends number, R>(size: L, map?: (i: number) => R): FixedArray<R | null, L> {
+  const array = Array(size).fill(null) as FixedArray<null, L>
+  return map ? fixedMap(array, (_, i) => map(i)) : array
 }
 
 export function fixedMap<T, L extends number, R>(
@@ -52,8 +56,8 @@ export function matdot<R1 extends number, C1 extends number, R2 extends C1, C2 e
   b: Matrix<R2, C2>,
 ): Matrix<R1, C2> {
   return fixedMap(a, aRow => {
-    return fixedMap(fixedArray(b[0].length), (_, i) => {
-      const bCol = fixedMap(fixedArray(b.length), (_, j) => b[i][j])
+    return fixedArray(b[0].length, i => {
+      const bCol = fixedArray(b.length, j => b[i][j])
       return dot(aRow, bCol)
     })
   })
