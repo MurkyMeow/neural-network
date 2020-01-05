@@ -32,11 +32,11 @@ export class Model<I extends number, O extends number, L extends number> {
     return { hidden, output }
   }
 
-  train(input: NTuple<I>, expectation: NTuple<O>): void {
+  train(input: NTuple<I>, desire: NTuple<O>): void {
     const { output, hidden } = this.guess(input)
   
-    const outputErrors = fixedMapPair(output, expectation, (y, yHat) =>
-      (y - yHat) * this._dnonlin(y))
+    const outputErrors = fixedMapPair(output, desire,
+      (y, yHat) => this._dnonlin(y) * (y - yHat))
 
     const newOutputs = fixedMapPair(this.outputs, outputErrors,
       (output, error, i) => fixedMap(output, w => w - error * hidden[i] * this.learningRate))
@@ -44,10 +44,10 @@ export class Model<I extends number, O extends number, L extends number> {
     const newOutBias = fixedMapPair(this.outputBias, outputErrors,
       (bias, error) => bias - error * this.learningRate)
   
-    const hiddenErrors = fixedMap(hidden, (_, i) => {
+    const hiddenErrors = fixedMap(hidden, (h, i) => {
       const weights = fixedMap(newOutputs, newOutput => newOutput[i])
   
-      const errors = fixedMapPair(weights, outputErrors, (w, err) => w * err)
+      const errors = fixedMapPair(weights, outputErrors, (w, err) => w * err * this._dnonlin(h))
   
       return errors.reduce((acc, err) => acc + err)
     })
@@ -56,8 +56,8 @@ export class Model<I extends number, O extends number, L extends number> {
       return fixedMapPair(layer, input, (w, x) => w - x * err * this.learningRate)
     })
   
-    const newLayerBias = fixedMapPair(this.layerBias, hidden,
-      (bias, h, i) => bias - hiddenErrors[i] * this._dnonlin(h) * this.learningRate)
+    const newLayerBias = fixedMapPair(this.layerBias, hiddenErrors,
+      (bias, err) => bias - err * this.learningRate)
 
     this.outputs = newOutputs
     this.outputBias = newOutBias
