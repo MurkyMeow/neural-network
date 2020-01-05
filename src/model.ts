@@ -1,5 +1,8 @@
 import { Matrix, NTuple, fixedMap, dot, fixedMapPair, fixedArray } from './math'
 
+// a random number between -0.5 and 0.5
+const rand = (): number => Math.random() - 0.5
+
 export class Model<I extends number, O extends number, L extends number> {
   layers: Matrix<L, I>
   outputs: Matrix<O, L>
@@ -8,11 +11,11 @@ export class Model<I extends number, O extends number, L extends number> {
   learningRate: number
 
   constructor(args: { inputSize: I, outputSize: O, layersCount: L, learningRate: number }) {
-    this.layers = fixedArray(args.layersCount, () => fixedArray(args.inputSize, Math.random))
-    this.outputs = fixedArray(args.outputSize, () => fixedArray(args.layersCount, Math.random))
+    this.layers = fixedArray(args.layersCount, () => fixedArray(args.inputSize, rand))
+    this.outputs = fixedArray(args.outputSize, () => fixedArray(args.layersCount, rand))
 
-    this.layerBias = fixedArray(args.layersCount, Math.random)
-    this.outputBias = fixedArray(args.outputSize, Math.random)
+    this.layerBias = fixedArray(args.layersCount, rand)
+    this.outputBias = fixedArray(args.outputSize, rand)
 
     this.learningRate = args.learningRate
   }
